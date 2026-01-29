@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["ageeva139 <ageevaa2002@gmail.com>"]
 readme = "README.md"
-packages = [{ include = "currency_tracker" }]
+packages = [{ include = "valutatrade_hub" }]
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -18,7 +18,7 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.poetry.scripts]
-project = "currency_tracker.main:main"
+project = "valutatrade_hub.cli.interface:main"
 
 
 [tool.ruff]
