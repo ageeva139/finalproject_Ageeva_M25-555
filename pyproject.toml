@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "finalproject-ageeva-m25-555"
+version = "0.1.0"
+description = ""
+authors = ["ageeva139 <ageevaa2002@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "currency_tracker" }]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.14.14"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry.scripts]
+project = "currency_tracker.main:main"
+
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+exclude = ["venv", ".venv", "dist", "__pycache__"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = []
