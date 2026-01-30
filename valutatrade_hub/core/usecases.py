@@ -1,9 +1,14 @@
 from datetime import datetime
 
-from valutatrade_hub.core.exceptions import ApiRequestError, CurrencyNotFoundError, InsufficientFundsError
-from valutatrade_hub.infra.settings import SettingsLoader
+from valutatrade_hub.core.exceptions import (
+    ApiRequestError,
+    CurrencyNotFoundError,
+    InsufficientFundsError,
+)
 from valutatrade_hub.core.models import User
 from valutatrade_hub.core.utils import load_json, normalize_currency_code, save_json
+from valutatrade_hub.decorators import log_action
+from valutatrade_hub.infra.settings import SettingsLoader
 
 
 def get_rate(
@@ -12,6 +17,9 @@ def get_rate(
     max_age_seconds: int = 300,
 ) -> dict:
     """возвращает курс и время обновления используя кэш или заглушку"""
+    settings = SettingsLoader()
+    max_age_seconds = int(settings.get("RATES_TTL_SECONDS", max_age_seconds))
+
     base = normalize_currency_code(base_currency)
     quote = normalize_currency_code(quote_currency)
     
@@ -268,6 +276,7 @@ def set_wallet_balance(wallets: dict, code: str, balance: float) -> None:
     wallets[code]["balance"] = float(balance)
 
 
+@log_action("BUY", verbose=True) #декоратор
 def buy(user: User, currency_code: str, amount) -> dict:
     """покупает валюту за usd и возвращает данные для вывода"""
     code = normalize_currency_code(currency_code)
@@ -315,7 +324,7 @@ def buy(user: User, currency_code: str, amount) -> dict:
         "after": code_balance_after,
     }
 
-
+@log_action("SELL", verbose=True) #декоратор
 def sell(user: User, currency_code: str, amount) -> dict:
     """продаёт валюту в usd и возвращает данные для вывода"""
     code = normalize_currency_code(currency_code)

@@ -80,7 +80,8 @@ class CryptoCurrency(Currency):
     def get_display_info(self) -> str:
         """возвращает строку для ui и логов"""
         mcap = fmt_mcap(self.market_cap)
-        return f"[CRYPTO] {self.code} — {self.name} (Algo: {self.algorithm}, MCAP: {mcap})"
+        return (f"[CRYPTO] {self.code} — {self.name} "
+            f"(Algo: {self.algorithm}, MCAP: {mcap})")
 
 
 #реестр валют для get_currency

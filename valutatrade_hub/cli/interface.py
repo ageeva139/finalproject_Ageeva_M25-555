@@ -3,7 +3,11 @@
 from datetime import datetime
 
 from valutatrade_hub.core import usecases
-from valutatrade_hub.core.exceptions import ApiRequestError, CurrencyNotFoundError, InsufficientFundsError
+from valutatrade_hub.core.exceptions import (
+    ApiRequestError,
+    CurrencyNotFoundError,
+    InsufficientFundsError,
+)
 
 
 def parse_args(parts: list) -> dict:
