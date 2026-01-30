@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from valutatrade_hub.core.exceptions import ApiRequestError, CurrencyNotFoundError, InsufficientFundsError
+from valutatrade_hub.infra.settings import SettingsLoader
 from valutatrade_hub.core.models import User
 from valutatrade_hub.core.utils import load_json, normalize_currency_code, save_json
 

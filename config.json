@@ -1,0 +1,7 @@
+{
+  "DATA_DIR": "data",
+  "RATES_TTL_SECONDS": 300,
+  "DEFAULT_BASE_CURRENCY": "USD",
+  "LOG_DIR": "logs",
+  "LOG_FORMAT": "%(asctime)s %(levelname)s %(message)s"
+}
