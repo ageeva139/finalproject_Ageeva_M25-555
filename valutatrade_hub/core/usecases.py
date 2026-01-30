@@ -1,14 +1,29 @@
 from datetime import datetime
 
+from valutatrade_hub.core.currencies import get_currency
 from valutatrade_hub.core.exceptions import (
     ApiRequestError,
-    CurrencyNotFoundError,
-    InsufficientFundsError,
 )
-from valutatrade_hub.core.models import User
+from valutatrade_hub.core.models import User, Wallet
 from valutatrade_hub.core.utils import load_json, normalize_currency_code, save_json
 from valutatrade_hub.decorators import log_action
 from valutatrade_hub.infra.settings import SettingsLoader
+
+
+def safe_load_json(filename: str, default):
+    """читает json и при проблемах возвращает понятную ошибку"""
+    try:
+        return load_json(filename, default)
+    except Exception as e:
+        raise ApiRequestError(str(e))
+
+
+def safe_save_json(filename: str, data) -> None:
+    """записывает json и при проблемах возвращает понятную ошибку"""
+    try:
+        save_json(filename, data)
+    except Exception as e:
+        raise ApiRequestError(str(e))
 
 
 def get_rate(
@@ -20,14 +35,14 @@ def get_rate(
     settings = SettingsLoader()
     max_age_seconds = int(settings.get("RATES_TTL_SECONDS", max_age_seconds))
 
-    base = normalize_currency_code(base_currency)
-    quote = normalize_currency_code(quote_currency)
+    base = get_currency(base_currency).code
+    quote = get_currency(quote_currency).code
     
     #ключ для поиска в кэше
     key = f"{base}_{quote}"
 
     # читаем кэш курсов из файла
-    rates = load_json("rates.json", {})
+    rates = safe_load_json("rates.json", {})
     #если файл случайно был не словарём, то начинаем с пустого
     if not isinstance(rates, dict):
         rates = {}
@@ -61,9 +76,9 @@ def get_rate(
 
     #если валюты нет в заглушке, то считаем что курс недоступен
     if base not in exchange_rates:
-        raise CurrencyNotFoundError(base)
+        raise ApiRequestError(f"Нет курса для {base}")
     if quote not in exchange_rates:
-        raise CurrencyNotFoundError(quote)
+        raise ApiRequestError(f"Нет курса для {quote}")
 
     rate = exchange_rates[base] / exchange_rates[quote]
 
@@ -72,10 +87,7 @@ def get_rate(
     rates[key] = {"rate": rate, "updated_at": now}
     rates["source"] = "StubRates"
     rates["last_refresh"] = now
-    try:
-        save_json("rates.json", rates)
-    except Exception as e:
-        raise ApiRequestError(str(e))
+    safe_save_json("rates.json", rates)
 
     return {"rate": rate, "updated_at": now}
 
@@ -192,7 +204,7 @@ def login_user(username: str, password: str) -> User:
 
 def load_portfolio_wallets(user_id: int) -> dict:
     """загружает кошельки пользователя"""
-    portfolios = load_json("portfolios.json", [])
+    portfolios = safe_load_json("portfolios.json", [])
     if not isinstance(portfolios, list):
         portfolios = []
 
@@ -204,7 +216,7 @@ def load_portfolio_wallets(user_id: int) -> dict:
             return wallets if isinstance(wallets, dict) else {}
 
     portfolios.append({"user_id": user_id, "wallets": {}})
-    save_json("portfolios.json", portfolios)
+    safe_save_json("portfolios.json", portfolios)
     return {}
 
 
@@ -245,7 +257,7 @@ def show_portfolio(user: User, base_currency: str = "USD") -> dict:
 
 def save_portfolio(user_id: int, wallets: dict) -> None:
     """сохраняет кошелек пользователя"""
-    portfolios = load_json("portfolios.json", [])
+    portfolios = safe_load_json("portfolios.json", [])
     if not isinstance(portfolios, list):
         portfolios = []
 
@@ -253,12 +265,23 @@ def save_portfolio(user_id: int, wallets: dict) -> None:
     for p in portfolios:
         if p.get("user_id") == user_id:
             p["wallets"] = wallets
-            save_json("portfolios.json", portfolios)
+            safe_save_json("portfolios.json", portfolios)
             return
 
     #если кошелька нет, создаём пустой и сохраняем
     portfolios.append({"user_id": user_id, "wallets": wallets})
-    save_json("portfolios.json", portfolios)
+    safe_save_json("portfolios.json", portfolios)
+
+
+def load_wallet(wallets: dict, code: str) -> Wallet:
+    """создаёт объект Wallet из словаря""" #для упрощения buy и sell
+    balance = get_wallet_balance(wallets, code)
+    return Wallet(code, balance)
+
+
+def save_wallet(wallets: dict, wallet: Wallet) -> None:
+    """сохраняет объект Wallet в словарь""" #для упрощения buy и sell
+    wallets[wallet.currency_code] = {"balance": float(wallet.balance)}
 
 
 def get_wallet_balance(wallets: dict, code: str) -> float:
@@ -279,7 +302,7 @@ def set_wallet_balance(wallets: dict, code: str, balance: float) -> None:
 @log_action("BUY", verbose=True) #декоратор
 def buy(user: User, currency_code: str, amount) -> dict:
     """покупает валюту за usd и возвращает данные для вывода"""
-    code = normalize_currency_code(currency_code)
+    code = get_currency(currency_code).code
 
     #приводим amount к числовому типу
     if isinstance(amount, bool):
@@ -296,24 +319,27 @@ def buy(user: User, currency_code: str, amount) -> dict:
         rate_info = get_rate(code, "USD")
         rate = float(rate_info["rate"])
     except Exception:
-        raise ValueError(f"Не удалось получить курс для {code}→USD")
+        raise ApiRequestError(f"Не удалось получить курс для {code}→USD")
 
     wallets = load_portfolio_wallets(user.get_user_id())
 
-    usd_balance_before = get_wallet_balance(wallets, "USD")
-    code_balance_before = get_wallet_balance(wallets, code)
+    usd_wallet = load_wallet(wallets, "USD")
+    code_wallet = load_wallet(wallets, code)
+
+    code_balance_before = float(code_wallet.balance)
 
     cost_usd = amount * rate
-    if usd_balance_before < cost_usd:
-        raise InsufficientFundsError(usd_balance_before, cost_usd, "USD")
 
-    usd_balance_after = usd_balance_before - cost_usd
-    code_balance_after = code_balance_before + amount
-
+    usd_wallet.withdraw(cost_usd)
+    code_wallet.deposit(amount)
+    
     #обновляем баланс обеих валют и сохраняем
-    set_wallet_balance(wallets, "USD", usd_balance_after)
-    set_wallet_balance(wallets, code, code_balance_after)
+    save_wallet(wallets, usd_wallet)
+    save_wallet(wallets, code_wallet)
     save_portfolio(user.get_user_id(), wallets)
+
+    code_balance_after = float(code_wallet.balance)
+
 
     return {
         "currency": code,
@@ -327,7 +353,7 @@ def buy(user: User, currency_code: str, amount) -> dict:
 @log_action("SELL", verbose=True) #декоратор
 def sell(user: User, currency_code: str, amount) -> dict:
     """продаёт валюту в usd и возвращает данные для вывода"""
-    code = normalize_currency_code(currency_code)
+    code = get_currency(currency_code).code
 
     #приводим amount к числовому типу
     if isinstance(amount, bool):
@@ -344,30 +370,32 @@ def sell(user: User, currency_code: str, amount) -> dict:
         rate_info = get_rate(code, "USD")
         rate = float(rate_info["rate"])
     except Exception:
-        raise ValueError(f"Не удалось получить курс для {code}→USD")
+        raise ApiRequestError(f"Не удалось получить курс для {code}→USD")
 
     wallets = load_portfolio_wallets(user.get_user_id())
 
     if code not in wallets:
-        raise ValueError(f"У вас нет кошелька '{code}'."
+        raise ValueError(f"У вас нет кошелька '{code}'. "
              "Добавьте валюту: она создаётся автоматически при первой покупке")
 
     #проверяем баланс
-    code_balance_before = get_wallet_balance(wallets, code)
-    if code_balance_before < amount:
-        raise InsufficientFundsError(code_balance_before, amount, code)
+    code_wallet = load_wallet(wallets, code)
+    usd_wallet = load_wallet(wallets, "USD")
 
-
-    usd_balance_before = get_wallet_balance(wallets, "USD")
+    code_balance_before = float(code_wallet.balance)
 
     revenue_usd = amount * rate
-    code_balance_after = code_balance_before - amount
-    usd_balance_after = usd_balance_before + revenue_usd
+
+    code_wallet.withdraw(amount)
+    usd_wallet.deposit(revenue_usd)
 
     #обновляем баланс обеих валют и сохраняем
-    set_wallet_balance(wallets, code, code_balance_after)
-    set_wallet_balance(wallets, "USD", usd_balance_after)
+    save_wallet(wallets, code_wallet)
+    save_wallet(wallets, usd_wallet)
     save_portfolio(user.get_user_id(), wallets)
+
+    code_balance_after = float(code_wallet.balance)
+
 
     return {
         "currency": code,

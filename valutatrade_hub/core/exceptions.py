@@ -2,9 +2,12 @@ class InsufficientFundsError(Exception):
     """ошибка когда денег не хватает"""
 
     def __init__(self, available: float, required: float, code: str):
+        def fmt(v):
+            return f"{float(v):.8f}".rstrip("0").rstrip(".")
+        
         msg = (
-            f"Недостаточно средств: доступно {available} {code}, "
-            f"требуется {required} {code}"
+            f"Недостаточно средств: доступно {fmt(available)} {code}, "
+            f"требуется {fmt(required)} {code}"
         )
         super().__init__(msg)
 
