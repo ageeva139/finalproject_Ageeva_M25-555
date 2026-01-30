@@ -3,5 +3,9 @@
   "RATES_TTL_SECONDS": 300,
   "DEFAULT_BASE_CURRENCY": "USD",
   "LOG_DIR": "logs",
-  "LOG_FORMAT": "%(asctime)s %(levelname)s %(message)s"
+  "LOG_FORMAT": "%(asctime)s %(levelname)s %(message)s",
+
+  "EXCHANGERATE_API_KEY": "f1873e639aadc989705d2eaf",
+  "FIAT_CODES": ["EUR", "GBP", "RUB"],
+  "CRYPTO_CODES": ["BTC", "ETH", "SOL"]
 }

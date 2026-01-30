@@ -98,9 +98,9 @@ def main() -> None:
                 args = parse_args(parts[1:])
                 base = args.get("from")
                 quote = args.get("to")
-                if base is None:
-                    print("нужно указать валюту, например:",
-                          "get-rate --from EUR --to USD")
+                if base is None or quote is None:
+                    print("нужно указать обе валюты, например:",
+                        "get-rate --from EUR --to USD")
                     continue
                 info = usecases.get_rate(base, quote)
                 rate = float(info["rate"])
@@ -116,7 +116,7 @@ def main() -> None:
                 if rate != 0:
                     reverse = 1 / rate
                     print(
-                        f"Обратный курс {quote_u}→{base_u}: {format_number(reverse, 2)}"
+                        f"Обратный курс {quote_u}→{base_u}: {format_number(reverse, 8)}"
                         )
 
             elif cmd == "show-portfolio": #показать кошелек

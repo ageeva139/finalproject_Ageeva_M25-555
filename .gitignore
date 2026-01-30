@@ -5,3 +5,4 @@ __pycache__/
 .ruff_cache/
 .core/__pycache__/
 .cli/__pycache__/
+config.json

@@ -7,6 +7,7 @@ from valutatrade_hub.core.exceptions import (
 from valutatrade_hub.core.models import User, Wallet
 from valutatrade_hub.core.utils import load_json, normalize_currency_code, save_json
 from valutatrade_hub.decorators import log_action
+from valutatrade_hub.infra.parser_service import refresh_rates_cache
 from valutatrade_hub.infra.settings import SettingsLoader
 
 
@@ -41,7 +42,7 @@ def get_rate(
     #ключ для поиска в кэше
     key = f"{base}_{quote}"
 
-    # читаем кэш курсов из файла
+    #читаем кэш курсов из файла
     rates = safe_load_json("rates.json", {})
     #если файл случайно был не словарём, то начинаем с пустого
     if not isinstance(rates, dict):
@@ -65,31 +66,23 @@ def get_rate(
             #если дата в кэше сломана, то обновляем её
             pass
 
-    #заглушка: сколько стоит 1 единица валюты в usd
-    exchange_rates = {
-        "USD": 1.0,
-        "EUR": 1.0786,
-        "BTC": 59337.21,
-        "RUB": 0.01016,
-        "ETH": 3720.00,
-    }
+    #кеш устарел или отсутствует, пробуем обновить
+    refresh_rates_cache()
 
-    #если валюты нет в заглушке, то считаем что курс недоступен
-    if base not in exchange_rates:
-        raise ApiRequestError(f"Нет курса для {base}")
-    if quote not in exchange_rates:
-        raise ApiRequestError(f"Нет курса для {quote}")
+    #читаем rates.json ещё раз после обновления
+    rates = safe_load_json("rates.json", {})
+    if not isinstance(rates, dict):
+        rates = {}
 
-    rate = exchange_rates[base] / exchange_rates[quote]
+    cached = rates.get(key)
+    if isinstance(cached, dict) and "rate" in cached and "updated_at" in cached:
+        return {
+            "rate": float(cached["rate"]),
+            "updated_at": str(cached["updated_at"]),
+        }
 
-    #сохраняем курс в кэш с временем обновления
-    now = datetime.now().replace(microsecond=0).isoformat()
-    rates[key] = {"rate": rate, "updated_at": now}
-    rates["source"] = "StubRates"
-    rates["last_refresh"] = now
-    safe_save_json("rates.json", rates)
+    raise ApiRequestError(f"Курс {base}→{quote} недоступен")
 
-    return {"rate": rate, "updated_at": now}
 
 
 def now_iso() -> str:

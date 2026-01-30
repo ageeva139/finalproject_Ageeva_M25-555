@@ -4,13 +4,40 @@
     "updated_at": "2026-01-30T12:12:11"
   },
   "source": "StubRates",
-  "last_refresh": "2026-01-30T21:31:41",
+  "last_refresh": "2026-01-30T22:59:25",
   "BTC_USD": {
-    "rate": 59337.21,
-    "updated_at": "2026-01-30T21:31:41"
+    "rate": 84274.0,
+    "updated_at": "2026-01-30T22:59:24",
+    "source": "CoinGecko"
   },
   "EUR_USD": {
-    "rate": 1.0786,
-    "updated_at": "2026-01-30T12:38:52"
+    "rate": 1.1963153487259242,
+    "updated_at": "2026-01-30T00:00:01+00:00",
+    "source": "ExchangeRate-API"
+  },
+  "ETH_USD": {
+    "rate": 2744.31,
+    "updated_at": "2026-01-30T22:59:24",
+    "source": "CoinGecko"
+  },
+  "SOL_USD": {
+    "rate": 118.52,
+    "updated_at": "2026-01-30T22:59:24",
+    "source": "CoinGecko"
+  },
+  "GBP_USD": {
+    "rate": 1.3806433798149937,
+    "updated_at": "2026-01-30T00:00:01+00:00",
+    "source": "ExchangeRate-API"
+  },
+  "RUB_USD": {
+    "rate": 0.013167423793534796,
+    "updated_at": "2026-01-30T00:00:01+00:00",
+    "source": "ExchangeRate-API"
+  },
+  "USD_USD": {
+    "rate": 1.0,
+    "updated_at": "2026-01-30T00:00:01+00:00",
+    "source": "ExchangeRate-API"
   }
 }
