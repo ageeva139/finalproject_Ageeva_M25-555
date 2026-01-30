@@ -3,3 +3,5 @@ dist/
 __pycache__/
 *.pyc
 .ruff_cache/
+.core/__pycache__/
+.cli/__pycache__/
