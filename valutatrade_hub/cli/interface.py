@@ -3,6 +3,7 @@
 from datetime import datetime
 
 from valutatrade_hub.core import usecases
+from valutatrade_hub.core.exceptions import ApiRequestError, CurrencyNotFoundError, InsufficientFundsError
 
 
 def parse_args(parts: list) -> dict:
@@ -208,5 +209,18 @@ def main() -> None:
                 print("Неизвестная команда")
                 print_help()
 
-        except Exception as e: #ловим ошибки
+        except InsufficientFundsError as e:
             print(str(e))
+
+        except CurrencyNotFoundError as e:
+            print(str(e))
+            print("Подсказка: используйте help")
+
+        except ApiRequestError as e:
+            print(str(e))
+            print("Попробуйте позже или проверьте соединение с интернетом")
+
+        except Exception as e:
+            print(str(e))
+            print_help()
+

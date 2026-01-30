@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from valutatrade_hub.core.exceptions import ApiRequestError, CurrencyNotFoundError, InsufficientFundsError
 from valutatrade_hub.core.models import User
 from valutatrade_hub.core.utils import load_json, normalize_currency_code, save_json
 
@@ -50,8 +51,10 @@ def get_rate(
     }
 
     #если валюты нет в заглушке, то считаем что курс недоступен
-    if base not in exchange_rates or quote not in exchange_rates:
-        raise ValueError(f"Курс {base}→{quote} недоступен. Повторите попытку позже.")
+    if base not in exchange_rates:
+        raise CurrencyNotFoundError(base)
+    if quote not in exchange_rates:
+        raise CurrencyNotFoundError(quote)
 
     rate = exchange_rates[base] / exchange_rates[quote]
 
@@ -60,7 +63,10 @@ def get_rate(
     rates[key] = {"rate": rate, "updated_at": now}
     rates["source"] = "StubRates"
     rates["last_refresh"] = now
-    save_json("rates.json", rates)
+    try:
+        save_json("rates.json", rates)
+    except Exception as e:
+        raise ApiRequestError(str(e))
 
     return {"rate": rate, "updated_at": now}
 
@@ -289,7 +295,7 @@ def buy(user: User, currency_code: str, amount) -> dict:
 
     cost_usd = amount * rate
     if usd_balance_before < cost_usd:
-        raise ValueError("Недостаточно средств на USD кошельке")
+        raise InsufficientFundsError(usd_balance_before, cost_usd, "USD")
 
     usd_balance_after = usd_balance_before - cost_usd
     code_balance_after = code_balance_before + amount
@@ -339,9 +345,8 @@ def sell(user: User, currency_code: str, amount) -> dict:
     #проверяем баланс
     code_balance_before = get_wallet_balance(wallets, code)
     if code_balance_before < amount:
-        raise ValueError(
-            f"Недостаточно средств: доступно {code_balance_before:.4f} {code},"
-            f"требуется {amount:.4f} {code}")
+        raise InsufficientFundsError(code_balance_before, amount, code)
+
 
     usd_balance_before = get_wallet_balance(wallets, "USD")
 

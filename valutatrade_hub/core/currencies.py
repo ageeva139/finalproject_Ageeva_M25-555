@@ -98,5 +98,5 @@ def get_currency(code: str) -> Currency:
     normalized = validate_code(code)
     currency = CURRENCY_REGISTRY.get(normalized)
     if currency is None:
-        raise CurrencyNotFoundError(f"неизвестная валюта '{normalized}'")
+        raise CurrencyNotFoundError(normalized)
     return currency
