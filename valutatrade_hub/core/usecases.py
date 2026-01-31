@@ -81,6 +81,31 @@ def get_rate(
     raise ApiRequestError(f"Курс {base}→{quote} недоступен, выполните update-rates")
 
 
+def get_rate_from_cache(base: str, quote: str) -> float:
+    """берёт курс из rates.json, если он там есть"""
+    base_u = get_currency(base).code
+    quote_u = get_currency(quote).code
+    key = f"{base_u}_{quote_u}"
+
+    data = safe_load_json("rates.json", {})
+    pairs = data.get("pairs")
+    if not isinstance(pairs, dict):
+        raise ApiRequestError(f"Нет курса для {base_u}→{quote_u}."
+                               " Выполните update-rates")
+
+    item = pairs.get(key)
+    if not isinstance(item, dict) or "rate" not in item:
+        raise ApiRequestError(f"Нет курса для {base_u}→{quote_u}."
+                              " Выполните update-rates")
+
+    rate = item.get("rate")
+    if not isinstance(rate, (int, float)):
+        raise ApiRequestError(f"Нет курса для {base_u}→{quote_u}."
+                              " Выполните update-rates")
+
+    return float(rate)
+
+
 def now_iso() -> str:
     """возвращает текущее время в iso формате"""
     return datetime.now().replace(microsecond=0).isoformat()
@@ -303,12 +328,9 @@ def buy(user: User, currency_code: str, amount) -> dict:
     except Exception:
         raise ValueError("'amount' должен быть положительным числом")
 
-    #получаем курс
-    try:
-        rate_info = get_rate(code, "USD")
-        rate = float(rate_info["rate"])
-    except Exception:
-        raise ApiRequestError(f"Не удалось получить курс для {code}→USD")
+    #получаем курс из локального кэша
+    rate = get_rate_from_cache(code, "USD")
+
 
     wallets = load_portfolio_wallets(user.get_user_id())
 
@@ -354,12 +376,8 @@ def sell(user: User, currency_code: str, amount) -> dict:
     except Exception:
         raise ValueError("'amount' должен быть положительным числом")
 
-    #получаем курс
-    try:
-        rate_info = get_rate(code, "USD")
-        rate = float(rate_info["rate"])
-    except Exception:
-        raise ApiRequestError(f"Не удалось получить курс для {code}→USD")
+    #получаем курс из локального кеша
+    rate = get_rate_from_cache(code, "USD")
 
     wallets = load_portfolio_wallets(user.get_user_id())
 

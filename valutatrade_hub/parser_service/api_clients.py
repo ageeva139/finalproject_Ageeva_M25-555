@@ -184,13 +184,19 @@ class ExchangeRateApiClient(BaseApiClient):
         }
 
         #берём время обновления из ответа, если получится
-        ts = now_iso()
-        updated = data.get("time_last_update_utc")
-        if isinstance(updated, str) and updated.strip():
+        ts_fetch = now_iso()
+
+        provider_updated = data.get("time_last_update_utc")
+        provider_ts = ""
+        if isinstance(provider_updated, str) and provider_updated.strip():
             try:
-                ts = parsedate_to_datetime(updated).replace(microsecond=0).isoformat()
+                provider_ts = (
+                    parsedate_to_datetime(provider_updated)
+                    .replace(microsecond=0)
+                    .isoformat()
+                )
             except Exception:
-                pass
+                provider_ts = ""
 
         out = {}
         for code in self._cfg.fiat_currencies:
@@ -209,17 +215,25 @@ class ExchangeRateApiClient(BaseApiClient):
             #api даёт usd-eur, а нам нужен eur-usd
             out[f"{c}_USD"] = {
                 "rate": 1.0 / float(v),
-                "updated_at": ts,
+                "updated_at": ts_fetch,
                 "source": "ExchangeRate-API",
-                "meta": {**meta_base, "raw_id": "latest/USD"},
+                "meta": {
+                    **meta_base,
+                    "raw_id": "latest/USD",
+                    "provider_updated_at": provider_ts,
+                },
             }
 
         # обавляем usd_usd на всякий случай
         out["USD_USD"] = {
             "rate": 1.0,
-            "updated_at": ts,
+            "updated_at": ts_fetch,
             "source": "ExchangeRate-API",
-            "meta": {**meta_base, "raw_id": "latest/USD"},
+            "meta": {
+                **meta_base,
+                "raw_id": "latest/USD",
+                "provider_updated_at": provider_ts,
+            },
         }
 
         return out

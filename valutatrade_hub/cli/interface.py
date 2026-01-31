@@ -42,7 +42,6 @@ def print_help() -> None:
     print("update-rates [--source <coingecko|exchangerate>] - обновить курсы")
     print("show-rates [--currency <code>] [--top <n>] [--base <code>] "
           "- показать курсы из кеша")
-    print("update-rates - обновить курсы через api")
     print("buy --currency <code> --amount <float> - покупка валюты за USD")
     print("sell --currency <code> --amount <float> - продажа валюты в USD")
     print("help - список доступных команд")

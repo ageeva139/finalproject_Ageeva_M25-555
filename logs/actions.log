@@ -4,3 +4,12 @@ INFO 2026-01-30T18:41:32 2026-01-30T18:41:32 SELL user='alice' user_id=1 currenc
 INFO 2026-01-30T20:48:21 2026-01-30T20:48:21 SELL user='alice' user_id=1 currency='BTC' amount=999 result=ERROR error_type=InsufficientFundsError error_message=Недостаточно средств: доступно 0.05000000000000001 BTC, требуется 999.0 BTC
 INFO 2026-01-30T20:57:12 2026-01-30T20:57:12 SELL user='alice' user_id=1 currency='BTC' amount=999 result=ERROR error_type=InsufficientFundsError error_message=Недостаточно средств: доступно 0.05 BTC, требуется 999 BTC
 INFO 2026-01-30T21:31:41 2026-01-30T21:31:41 SELL user='alice' user_id=1 currency='BTC' amount=999 result=ERROR error_type=InsufficientFundsError error_message=Недостаточно средств: доступно 0.05 BTC, требуется 999 BTC
+INFO 2026-01-31T13:53:14 2026-01-31T13:53:14 BUY user='alice' user_id=1 currency='BTC' amount=0.01 rate=82987.0 base='USD' result=OK before=0.05 after=0.06 cost_usd=829.87
+INFO 2026-01-31T13:53:20 2026-01-31T13:53:20 BUY user='alice' user_id=1 currency='EUR' amount=50 result=ERROR error_type=ApiRequestError error_message=Ошибка при обращении к внешнему API: Не удалось получить курс для EUR→USD
+INFO 2026-01-31T13:53:35 2026-01-31T13:53:35 SELL user='alice' user_id=1 currency='BTC' amount=0.005 rate=82987.0 base='USD' result=OK before=0.06 after=0.055 revenue_usd=414.935
+INFO 2026-01-31T14:02:03 2026-01-31T14:02:03 BUY user='alice' user_id=1 currency='EUR' amount=50.0 rate=1.1890606420927468 base='USD' result=OK before=0 after=50 cost_usd=59.4530321
+INFO 2026-01-31T14:02:38 2026-01-31T14:02:38 BUY user='alice' user_id=1 currency='EUR' amount=50.0 rate=1.1890606420927468 base='USD' result=OK before=50 after=100 cost_usd=59.4530321
+INFO 2026-01-31T14:11:48 2026-01-31T14:11:48 BUY user='alice' user_id=1 currency='BTC' amount=0.01 rate=82928.0 base='USD' result=OK before=0.05 after=0.06 cost_usd=829.28
+INFO 2026-01-31T14:11:54 2026-01-31T14:11:54 BUY user='alice' user_id=1 currency='EUR' amount=50.0 rate=1.1890606420927468 base='USD' result=OK before=100 after=150 cost_usd=59.4530321
+INFO 2026-01-31T14:12:01 2026-01-31T14:12:01 BUY user='alice' user_id=1 currency='BTC' amount=999 result=ERROR error_type=InsufficientFundsError error_message=Недостаточно средств: доступно 49111.2669679 USD, требуется 82845072 USD
+INFO 2026-01-31T14:12:11 2026-01-31T14:12:11 SELL user='alice' user_id=1 currency='BTC' amount=0.005 rate=82928.0 base='USD' result=OK before=0.06 after=0.055 revenue_usd=414.64
