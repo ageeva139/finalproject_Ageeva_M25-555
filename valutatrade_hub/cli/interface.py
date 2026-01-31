@@ -8,7 +8,12 @@ from valutatrade_hub.core.exceptions import (
     CurrencyNotFoundError,
     InsufficientFundsError,
 )
-from valutatrade_hub.parser_service import refresh_rates_cache
+from valutatrade_hub.parser_service.api_clients import (
+    CoinGeckoClient,
+    ExchangeRateApiClient,
+)
+from valutatrade_hub.parser_service.storage import load_rates_cache
+from valutatrade_hub.parser_service.updater import RatesUpdater
 
 
 def parse_args(parts: list) -> dict:
@@ -34,6 +39,9 @@ def print_help() -> None:
     print("login --username <str> --password <str> - войти в аккаунт")
     print("show-portfolio [--base <code>] - показать кошелек")
     print("get-rate --from <code> --to <code> - узнать курс")
+    print("update-rates [--source <coingecko|exchangerate>] - обновить курсы")
+    print("show-rates [--currency <code>] [--top <n>] [--base <code>] "
+          "- показать курсы из кеша")
     print("update-rates - обновить курсы через api")
     print("buy --currency <code> --amount <float> - покупка валюты за USD")
     print("sell --currency <code> --amount <float> - продажа валюты в USD")
@@ -211,9 +219,126 @@ def main() -> None:
                     f"стало {format_number(after, code=code)}")
                 print(f"Оценочная выручка: {format_number(revenue, 2)} USD")
 
-            elif cmd == "update-rates":  #обновление курсов вручную
-                refresh_rates_cache()
-                print("курсы обновлены")
+            elif cmd == "update-rates": #обновить курсы парсером
+                args = parse_args(parts[1:])
+                source = args.get("source")
+
+                clients = []
+                if source is None:
+                    clients = [CoinGeckoClient(), ExchangeRateApiClient()]
+                else:
+                    s = str(source).strip().lower()
+                    if s == "coingecko":
+                        clients = [CoinGeckoClient()]
+                    elif s == "exchangerate":
+                        clients = [ExchangeRateApiClient()]
+                    else:
+                        print(
+                            "неизвестный source, варианты: coingecko или exchangerate"
+                        )
+                        continue
+
+                print("INFO: Starting rates update...")
+
+                updater = RatesUpdater(clients)
+                result = updater.run_update()
+
+                pairs = result.get("pairs", {})
+                last_refresh = result.get("last_refresh", "")
+
+                if not isinstance(pairs, dict) or not pairs:
+                    print("Update completed with errors. Check logs for details.")
+                    continue
+
+                print(
+                    f"Update successful. Total rates updated: {len(pairs)}. "
+                    f"Last refresh: {last_refresh}"
+                )
+            
+            elif cmd == "show-rates": #показать курсы из кеша
+                args = parse_args(parts[1:])
+                currency = args.get("currency")
+                top = args.get("top")
+                base = args.get("base")
+
+                data = load_rates_cache()
+                pairs = data.get("pairs")
+                last_refresh = data.get("last_refresh", "")
+
+                if not isinstance(pairs, dict) or not pairs:
+                    print("Локальный кеш курсов пуст. Выполните 'update-rates', "
+                        "чтобы загрузить данные")
+                    continue
+
+                base_u = "USD"
+                if base is not None:
+                    base_u = str(base).strip().upper()
+
+                items = []
+                for pair, item in pairs.items():
+                    if not isinstance(item, dict):
+                        continue
+                    rate = item.get("rate")
+                    updated_at = item.get("updated_at", "")
+                    source = item.get("source", "")
+                    if not isinstance(rate, (int, float)):
+                        continue
+                    items.append((str(pair), float(rate), str(updated_at), str(source)))
+
+                #фильтр по валюте
+                if currency is not None:
+                    cur = str(currency).strip().upper()
+                    filtered = []
+                    for pair, rate, updated_at, source in items:
+                        if pair.startswith(f"{cur}_") or pair.endswith(f"_{cur}"):
+                            filtered.append((pair, rate, updated_at, source))
+                    items = filtered
+
+                    if not items:
+                        print(f"Курс для '{cur}' не найден в кеше.")
+                        continue
+
+                #если base не usd, пересчитываем только пары *_USD
+                if base_u != "USD":
+                    base_pair = f"{base_u}_USD"
+                    base_item = pairs.get(base_pair)
+                    if not isinstance(base_item, dict) or "rate" not in base_item:
+                        print(f"Курс для базовой валюты '{base_u}' не найден в кеше.")
+                        continue
+
+                    base_rate_usd = float(base_item["rate"])
+                    converted = []
+                    for pair, rate, updated_at, source in items:
+                        if not pair.endswith("_USD"):
+                            continue
+                        from_code = pair.split("_", 1)[0]
+                        new_rate = rate / base_rate_usd
+                        converted.append(
+                            (
+                                f"{from_code}_{base_u}",
+                                float(new_rate),
+                                updated_at,
+                                source,
+                            )
+                        )
+                    items = converted
+
+                #сортировка
+                if top is not None:
+                    try:
+                        n = int(top)
+                    except Exception:
+                        print("--top должен быть числом")
+                        continue
+                    items.sort(key=lambda x: x[1], reverse=True)
+                    items = items[: max(0, n)]
+                else:
+                    items.sort(key=lambda x: x[0])
+
+                print(f"Rates from cache (updated at {last_refresh}):")
+                for pair, rate, updated_at, source in items:
+                    print(f"- {pair}: {format_number(rate, 8)} "
+                        f"(обновлено: {updated_at}, source: {source})")
 
             else: #неизвестная кмоанда
                 print("Неизвестная команда")

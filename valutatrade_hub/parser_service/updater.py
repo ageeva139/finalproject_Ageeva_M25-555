@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
 import logging
+from datetime import datetime, timezone
 
 from valutatrade_hub.core.exceptions import ApiRequestError
 from valutatrade_hub.parser_service.api_clients import (

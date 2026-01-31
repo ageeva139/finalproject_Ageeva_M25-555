@@ -5,9 +5,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from valutatrade_hub.core.exceptions import ApiRequestError
-from valutatrade_hub.core.utils import load_json, save_json
+from valutatrade_hub.core.utils import get_data_dir, load_json, save_json
 from valutatrade_hub.parser_service.config import ParserConfig
-from valutatrade_hub.core.utils import get_data_dir
 
 
 def now_utc() -> str:

@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
 import time
+from abc import ABC, abstractmethod
 from email.utils import parsedate_to_datetime
 
 import requests
@@ -81,7 +81,8 @@ class CoinGeckoClient(BaseApiClient):
             raise ApiRequestError("Ошибка при обращении к внешнему API: плохой json")
 
         if not isinstance(data, dict):
-            raise ApiRequestError("Ошибка при обращении к внешнему API: ответ не объект")
+            raise ApiRequestError(
+                "Ошибка при обращении к внешнему API: ответ не объект"            )
 
         #общие метаданные ответа
         meta_base = {
@@ -162,7 +163,8 @@ class ExchangeRateApiClient(BaseApiClient):
             raise ApiRequestError("Ошибка при обращении к внешнему API: плохой json")
 
         if not isinstance(data, dict):
-            raise ApiRequestError("Ошибка при обращении к внешнему API: ответ не объект")
+            raise ApiRequestError(
+                "Ошибка при обращении к внешнему API: ответ не объект"            )
 
         #базовая проверка успеха ответа
         if data.get("result") != "success":

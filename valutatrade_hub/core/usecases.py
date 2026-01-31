@@ -7,7 +7,6 @@ from valutatrade_hub.core.exceptions import (
 from valutatrade_hub.core.models import User, Wallet
 from valutatrade_hub.core.utils import load_json, normalize_currency_code, save_json
 from valutatrade_hub.decorators import log_action
-from valutatrade_hub.infra.parser_service import refresh_rates_cache
 from valutatrade_hub.infra.settings import SettingsLoader
 
 
@@ -58,7 +57,11 @@ def get_rate(
             ts = str(cached["updated_at"]).replace("Z", "+00:00")
             updated_at = datetime.fromisoformat(ts)
 
-            now_dt = datetime.now(updated_at.tzinfo) if updated_at.tzinfo else datetime.now()
+            now_dt = (
+                datetime.now(updated_at.tzinfo)
+                if updated_at.tzinfo
+                else datetime.now()
+            )
             age = (now_dt - updated_at).total_seconds()
 
             if age <= max_age_seconds:
