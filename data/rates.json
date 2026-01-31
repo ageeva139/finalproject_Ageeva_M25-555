@@ -1,43 +1,44 @@
 {
-  "USD_BTC": {
-    "rate": 1.685283146949444e-05,
-    "updated_at": "2026-01-30T12:12:11"
+  "pairs": {
+    "USD_BTC": {
+      "rate": 1.685283146949444e-05,
+      "updated_at": "2026-01-30T12:12:11"
+    },
+    "BTC_USD": {
+      "rate": 82996.0,
+      "updated_at": "2026-01-31T12:18:36Z",
+      "source": "CoinGecko"
+    },
+    "EUR_USD": {
+      "rate": 1.1890606420927468,
+      "updated_at": "2026-01-31T00:00:01Z",
+      "source": "ExchangeRate-API"
+    },
+    "ETH_USD": {
+      "rate": 2640.77,
+      "updated_at": "2026-01-31T12:18:36Z",
+      "source": "CoinGecko"
+    },
+    "SOL_USD": {
+      "rate": 115.65,
+      "updated_at": "2026-01-31T12:18:36Z",
+      "source": "CoinGecko"
+    },
+    "GBP_USD": {
+      "rate": 1.37211855104281,
+      "updated_at": "2026-01-31T00:00:01Z",
+      "source": "ExchangeRate-API"
+    },
+    "RUB_USD": {
+      "rate": 0.013166383589419496,
+      "updated_at": "2026-01-31T00:00:01Z",
+      "source": "ExchangeRate-API"
+    },
+    "USD_USD": {
+      "rate": 1.0,
+      "updated_at": "2026-01-31T00:00:01Z",
+      "source": "ExchangeRate-API"
+    }
   },
-  "source": "StubRates",
-  "last_refresh": "2026-01-30T22:59:25",
-  "BTC_USD": {
-    "rate": 84274.0,
-    "updated_at": "2026-01-30T22:59:24",
-    "source": "CoinGecko"
-  },
-  "EUR_USD": {
-    "rate": 1.1963153487259242,
-    "updated_at": "2026-01-30T00:00:01+00:00",
-    "source": "ExchangeRate-API"
-  },
-  "ETH_USD": {
-    "rate": 2744.31,
-    "updated_at": "2026-01-30T22:59:24",
-    "source": "CoinGecko"
-  },
-  "SOL_USD": {
-    "rate": 118.52,
-    "updated_at": "2026-01-30T22:59:24",
-    "source": "CoinGecko"
-  },
-  "GBP_USD": {
-    "rate": 1.3806433798149937,
-    "updated_at": "2026-01-30T00:00:01+00:00",
-    "source": "ExchangeRate-API"
-  },
-  "RUB_USD": {
-    "rate": 0.013167423793534796,
-    "updated_at": "2026-01-30T00:00:01+00:00",
-    "source": "ExchangeRate-API"
-  },
-  "USD_USD": {
-    "rate": 1.0,
-    "updated_at": "2026-01-30T00:00:01+00:00",
-    "source": "ExchangeRate-API"
-  }
+  "last_refresh": "2026-01-31T09:18:37Z"
 }

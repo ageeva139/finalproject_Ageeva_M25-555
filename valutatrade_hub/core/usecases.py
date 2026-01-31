@@ -48,41 +48,34 @@ def get_rate(
     if not isinstance(rates, dict):
         rates = {}
 
-    #если курс уже есть в кэше, то просто возвращаем его
-    cached = rates.get(key)
+    pairs = rates.get("pairs")
+    if not isinstance(pairs, dict):
+        pairs = rates
+
+    cached = pairs.get(key)
     if isinstance(cached, dict) and "rate" in cached and "updated_at" in cached:
         try:
-            #превращаем iso формат обратно в datetime
-            updated_at = datetime.fromisoformat(str(cached["updated_at"]))
-            #считаем сколько секунд прошло с момента обновления
-            age = (datetime.now() - updated_at).total_seconds()
-            #если запись моложе max_age_seconds то используем её
+            ts = str(cached["updated_at"]).replace("Z", "+00:00")
+            updated_at = datetime.fromisoformat(ts)
+
+            now_dt = datetime.now(updated_at.tzinfo) if updated_at.tzinfo else datetime.now()
+            age = (now_dt - updated_at).total_seconds()
+
             if age <= max_age_seconds:
                 return {
                     "rate": float(cached["rate"]),
-                    "updated_at": updated_at.replace(microsecond=0).isoformat(),
+                    "updated_at": str(cached["updated_at"]),
+                    "source": str(cached.get("source", "")),
                 }
         except Exception:
-            #если дата в кэше сломана, то обновляем её
             pass
 
-    #кеш устарел или отсутствует, пробуем обновить
-    refresh_rates_cache()
+    if isinstance(cached, dict) and "updated_at" in cached:
+        raise ApiRequestError(
+            f"Данные по курсу {base}→{quote} устарели, выполните update-rates"
+        )
 
-    #читаем rates.json ещё раз после обновления
-    rates = safe_load_json("rates.json", {})
-    if not isinstance(rates, dict):
-        rates = {}
-
-    cached = rates.get(key)
-    if isinstance(cached, dict) and "rate" in cached and "updated_at" in cached:
-        return {
-            "rate": float(cached["rate"]),
-            "updated_at": str(cached["updated_at"]),
-        }
-
-    raise ApiRequestError(f"Курс {base}→{quote} недоступен")
-
+    raise ApiRequestError(f"Курс {base}→{quote} недоступен, выполните update-rates")
 
 
 def now_iso() -> str:

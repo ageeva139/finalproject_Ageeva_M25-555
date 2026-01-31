@@ -8,6 +8,7 @@ from valutatrade_hub.core.exceptions import (
     CurrencyNotFoundError,
     InsufficientFundsError,
 )
+from valutatrade_hub.parser_service import refresh_rates_cache
 
 
 def parse_args(parts: list) -> dict:
@@ -33,6 +34,7 @@ def print_help() -> None:
     print("login --username <str> --password <str> - войти в аккаунт")
     print("show-portfolio [--base <code>] - показать кошелек")
     print("get-rate --from <code> --to <code> - узнать курс")
+    print("update-rates - обновить курсы через api")
     print("buy --currency <code> --amount <float> - покупка валюты за USD")
     print("sell --currency <code> --amount <float> - продажа валюты в USD")
     print("help - список доступных команд")
@@ -209,6 +211,10 @@ def main() -> None:
                     f"стало {format_number(after, code=code)}")
                 print(f"Оценочная выручка: {format_number(revenue, 2)} USD")
 
+            elif cmd == "update-rates":  #обновление курсов вручную
+                refresh_rates_cache()
+                print("курсы обновлены")
+
             else: #неизвестная кмоанда
                 print("Неизвестная команда")
                 print_help()
@@ -222,7 +228,7 @@ def main() -> None:
 
         except ApiRequestError as e:
             print(str(e))
-            print("Попробуйте позже или проверьте соединение с интернетом")
+            print("Выполните update-rates")
 
         except Exception as e:
             print(str(e))
